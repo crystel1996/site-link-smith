@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Globe, ShoppingCart, Check, X } from "lucide-react";
+import { Search, Globe, ShoppingCart, Check, X, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,12 +17,19 @@ interface DomainResult {
   premium?: boolean;
 }
 
+// Mock data pour les domaines existants
+const mockExistingDomains = [
+  { domain: "monentreprise.com", status: "Actif", lastUpdate: "15 Jan 2024" },
+  { domain: "boutique.fr", status: "En attente", lastUpdate: "10 Jan 2024" }
+];
+
 export const DomainSearch = ({ onNext }: DomainSearchProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOwned, setIsOwned] = useState<boolean | null>(null);
   const [searchResults, setSearchResults] = useState<DomainResult[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
+  const [showExistingDomains, setShowExistingDomains] = useState(true);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
@@ -61,8 +68,71 @@ export const DomainSearch = ({ onNext }: DomainSearchProps) => {
         </p>
       </div>
 
+      {/* Existing domains card */}
+      {showExistingDomains && mockExistingDomains.length > 0 && (
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Domaines existants
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowExistingDomains(false)}
+                className="text-primary hover:bg-primary/10"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Modifier
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mockExistingDomains.map((domain, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex items-center justify-between p-3 rounded-lg border-2 cursor-pointer transition-all",
+                  selectedDomain === domain.domain ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/50"
+                )}
+                onClick={() => handleDomainSelect(domain.domain)}
+              >
+                <div className="flex items-center gap-3">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <div>
+                    <span className="font-medium">{domain.domain}</span>
+                    <p className="text-xs text-muted-foreground">Mis à jour: {domain.lastUpdate}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={domain.status === "Actif" ? "default" : "secondary"}
+                    className={domain.status === "Actif" ? "bg-success text-success-foreground" : ""}
+                  >
+                    {domain.status}
+                  </Badge>
+                  {selectedDomain === domain.domain && (
+                    <Check className="h-4 w-4 text-success" />
+                  )}
+                </div>
+              </div>
+            ))}
+            {selectedDomain && mockExistingDomains.some(d => d.domain === selectedDomain) && (
+              <Button 
+                onClick={handleContinue}
+                className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90"
+              >
+                Continuer avec {selectedDomain}
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Choice between existing or new domain */}
-      <div className="grid grid-cols-2 gap-4">
+      {!showExistingDomains && (
+        <div className="grid grid-cols-2 gap-4">
         <Card 
           className={cn(
             "cursor-pointer transition-all duration-300 border-2 hover:shadow-[var(--shadow-card)]",
@@ -98,10 +168,11 @@ export const DomainSearch = ({ onNext }: DomainSearchProps) => {
             </p>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
 
       {/* Domain search */}
-      {isOwned !== null && (
+      {!showExistingDomains && isOwned !== null && (
         <Card className="border-border bg-gradient-to-br from-card to-muted/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
